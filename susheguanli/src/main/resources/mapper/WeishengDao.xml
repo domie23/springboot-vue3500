@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.WeishengDao">
+
+
+
+
+
+
+
+
+
+
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        a.id as id
+        ,a.sushe_id as susheId
+        ,a.insert_time as insertTime
+        ,a.jifenjilu_number as jifenjiluNumber
+        ,a.create_time as createTime
+    </sql>
+    <select id="selectListView" parameterType="map" resultType="com.entity.view.WeishengView" >
+        SELECT
+        <include refid="Base_Column_List" />
+
+--         级联表的字段
+        ,sushe.sushe_name as susheName
+        ,sushe.loudong_types as loudongTypes
+
+        FROM weisheng  a
+        left JOIN sushe sushe ON a.sushe_id = sushe.id
+
+        <where>
+            <if test="params.ids != null">
+                and a.id in
+                <foreach item="item" index="index" collection="params.ids" open="(" separator="," close=")">
+                #{item}
+                </foreach>
+            </if>
+            <if test="params.susheId != null and params.susheId != ''">
+                and a.sushe_id = #{params.susheId}
+            </if>
+            <if test=" params.insertTimeStart != '' and params.insertTimeStart != null ">
+                <![CDATA[  and UNIX_TIMESTAMP(a.insert_time) >= UNIX_TIMESTAMP(#{params.insertTimeStart}) ]]>
+            </if>
+            <if test=" params.insertTimeEnd != '' and params.insertTimeEnd != null ">
+                <![CDATA[  and UNIX_TIMESTAMP(a.insert_time) <= UNIX_TIMESTAMP(#{params.insertTimeEnd}) ]]>
+            </if>
+            <if test="params.jifenjiluNumberStart != null ">
+                <![CDATA[  and a.jifenjilu_number >= #{params.jifenjiluNumberStart}   ]]>
+            </if>
+            <if test="params.jifenjiluNumberEnd != null ">
+                <![CDATA[  and a.jifenjilu_number <= #{params.jifenjiluNumberEnd}   ]]>
+            </if>
+
+                <!-- 判断宿舍的id不为空 -->
+            <if test=" params.susheIdNotNull != '' and params.susheIdNotNull != null and params.susheIdNotNull != 'null' ">
+                and a.sushe_id IS NOT NULL
+            </if>
+            <if test=" params.susheName != '' and params.susheName != null and params.susheName != 'null' ">
+                and sushe.sushe_name like CONCAT('%',#{params.susheName},'%')
+            </if>
+            <if test="params.loudongTypes != null  and params.loudongTypes != ''">
+                and sushe.loudong_types = #{params.loudongTypes}
+            </if>
+        </where>
+
+        order by a.insert_time,jifenjilu_number desc
+    </select>
+
+</mapper>
